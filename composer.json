@@ -1,0 +1,15 @@
+{
+  "name": "junyouava/junyou-sdk-php",
+  "description": "简单易用的 Junyou AVA PHP SDK。",
+  "type": "library",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Junyou\\SDK\\": "src/"
+    }
+  },
+  "require": {
+    "php": ">=8.0"
+  }
+}
+
