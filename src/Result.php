@@ -16,7 +16,7 @@ final class Result
     /**
      * @param mixed $data
      */
-    private function __construct(int $code, bool $success, string $message, $data)
+    public function __construct(int $code, bool $success, string $message, $data)
     {
         $this->code = $code;
         $this->success = $success;

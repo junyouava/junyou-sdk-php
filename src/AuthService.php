@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Junyou\SDK;
 
+use Junyou\SDK\Models\OpenIdToken;
 use RuntimeException;
 
 final class AuthService
@@ -88,7 +89,7 @@ final class AuthService
         return $header;
     }
 
-    public function generateSignatureWithOpenAuth(string $method, string $apiPath, Models\OpenIdToken $openIdToken): SignatureWithOpenAuth
+    public function generateSignatureWithOpenAuth(string $method, string $apiPath, OpenIdToken $openIdToken): SignatureWithOpenAuth
     {
         $signature = $this->generateSignature($method, $apiPath);
 
