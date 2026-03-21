@@ -20,52 +20,95 @@ final class APIService
         $this->client = $client;
     }
 
+    /**
+     * 开放注册（手机号等）。
+     * 对应接口: POST /api/open/v1/register
+     */
     public function register(RegisterInfo $registerInfo): Result
     {
         return $this->doRequest('POST', Defaults::API_PATH_REGISTER, $registerInfo->toArray());
     }
 
+    /**
+     * 用户登录，换取 Open Token；部分开放接口需在请求头携带 X-Open-Auth。
+     * 对应接口: POST /api/open/v1/auth/login
+     */
     public function authLogin(OpenIdToken $token): Result
     {
         return $this->doRequest('POST', Defaults::API_PATH_AUTH_LOGIN, $token->toArray());
     }
 
+    /**
+     * 设置密码（set_pwd）。
+     * 对应接口: POST /api/open/v1/auth/set_pwd
+     */
     public function authSetPWD(OpenIdToken $token): Result
     {
         return $this->doRequest('POST', Defaults::API_PATH_AUTH_SET_PWD, $token->toArray());
     }
 
+    /**
+     * 开放认证接口（auth/cmt）。
+     * 对应接口: POST /api/open/v1/auth/cmt
+     */
     public function authCMT(OpenIdToken $token): Result
     {
         return $this->doRequest('POST', Defaults::API_PATH_AUTH_CMT, $token->toArray());
     }
 
+    /**
+     * 设置企业 JKS 地址等企业侧配置。
+     * 对应接口: POST /api/open/v1/enterprise/jks_url
+     */
     public function setEnterpriseJKSURL(EnterpriseJKSURLRequest $req): Result
     {
         return $this->doRequest('POST', Defaults::API_PATH_ENTERPRISE_JKS_URL, $req->toArray());
     }
 
+    /**
+     * 确认权证释放（合作伙伴）。
+     * 对应接口: POST /api/open/v1/ewt/confirm_ewt_rbp
+     */
     public function confirmEWTReleaseByPartner(EWTBizNoInfo $info): Result
     {
         return $this->doRequest('POST', Defaults::API_PATH_EWT_CONFIRM_RELEASE_BY_PARTNER, $info->toArray());
     }
 
+    /**
+     * 预提交权证释放（与 commitEWTReleaseByPartner 配套）。
+     * 对应接口: POST /api/open/v1/ewt/pre_ewt_rbp_open
+     *
+     * $openAuth 为接收权证释放用户的 Open Token（X-Open-Auth）；空或仅空白则不带该头。
+     * 该接口需要用户身份，未带时服务端可能返回「校验失败：缺少用户身份」。
+     * $openAuth 可通过 /api/open/v1/auth/login 等开放接口换取。
+     */
     public function preCommitEWTReleaseByPartner(PreEWTReleaseByPartnerRequest $req, string $openAuth = ''): Result
     {
-        $extra = [];
-        if ($openAuth !== '') {
-            $extra[Defaults::HEADER_OPEN_AUTH] = $openAuth;
-        }
-
-        return $this->doRequest('POST', Defaults::API_PATH_EWT_PRE_OPEN_RELEASE_BY_PARTNER, $req->toArray(), $extra);
+        return $this->doRequest(
+            'POST',
+            Defaults::API_PATH_EWT_PRE_OPEN_RELEASE_BY_PARTNER,
+            $req->toArray(),
+            $this->openAuthExtraHeaders($openAuth)
+        );
     }
 
+    /**
+     * 提交权证释放（伙伴）。
+     * 对应接口: POST /api/open/v1/ewt/commit_ewt_rbp
+     */
     public function commitEWTReleaseByPartner(CommitEWTReleaseByPartnerRequest $req): Result
     {
         return $this->doRequest('POST', Defaults::API_PATH_EWT_COMMIT_RELEASE_BY_PARTNER, $req->toArray());
     }
 
-    public function getEWTBalance(int $page = 1, int $pageSize = 10): Result
+    /**
+     * 权证余额查询。
+     * 对应接口: GET /api/open/v1/ewt/balance?page&page_size
+     *
+     * $openAuth 为空或仅空白时不带 X-Open-Auth，按企业维度查询；
+     * 否则为 authLogin 返回的 Open Token，按该用户维度查询。
+     */
+    public function getEWTBalance(int $page = 1, int $pageSize = 10, string $openAuth = ''): Result
     {
         if ($page <= 0) {
             $page = 1;
@@ -80,16 +123,23 @@ final class APIService
         ]);
 
         $path = Defaults::API_PATH_EWT_BALANCE . '?' . $query;
-        return $this->doRequest('GET', $path, null);
+        return $this->doRequest('GET', $path, null, $this->openAuthExtraHeaders($openAuth));
     }
 
+    /**
+     * 权证交易明细查询。
+     * 对应接口: GET /api/open/v1/ewt/transaction_details?...
+     *
+     * $openAuth 为空或仅空白时不带 X-Open-Auth，按企业维度查询；否则按该用户维度查询。
+     */
     public function getEWTTransactionDetails(
         int $page = 1,
         int $pageSize = 10,
         string $transactionType = '',
         string $bizType = '',
         int $year = 0,
-        int $month = 0
+        int $month = 0,
+        string $openAuth = ''
     ): Result {
         if ($page <= 0) {
             $page = 1;
@@ -118,7 +168,22 @@ final class APIService
         $query = http_build_query($params);
         $path = Defaults::API_PATH_EWT_TRANSACTION_DETAILS . '?' . $query;
 
-        return $this->doRequest('GET', $path, null);
+        return $this->doRequest('GET', $path, null, $this->openAuthExtraHeaders($openAuth));
+    }
+
+    /**
+     * 将 Open Token 转为 doRequest 的 extraHeaders；空或仅空白返回空数组。
+     *
+     * @return array<string,string>
+     */
+    private function openAuthExtraHeaders(string $openAuth): array
+    {
+        $s = trim($openAuth);
+        if ($s === '') {
+            return [];
+        }
+
+        return [Defaults::HEADER_OPEN_AUTH => $s];
     }
 
     /**

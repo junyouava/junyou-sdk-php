@@ -94,10 +94,10 @@ SDK 主客户端，提供所有服务访问入口。
 - **`authSetPWD(OpenIdToken $token): Result`**：设置密码认证  
 - **`authCMT(OpenIdToken $token): Result`**：验证认证  
 - **`confirmEWTReleaseByPartner(EWTBizNoInfo $info): Result`**：确认权证释放  
-- **`preCommitEWTReleaseByPartner(PreEWTReleaseByPartnerRequest $req, string $openAuth = ''): Result`**：预提交权证释放  
+- **`preCommitEWTReleaseByPartner(PreEWTReleaseByPartnerRequest $req, string $openAuth = ''): Result`**：预提交权证释放（`$openAuth` 为 Open Token，会作为 `X-Open-Auth` 发送；空则不带该头）  
 - **`commitEWTReleaseByPartner(CommitEWTReleaseByPartnerRequest $req): Result`**：提交权证释放  
-- **`getEWTBalance(int $page = 1, int $pageSize = 10): Result`**：查询权证余额  
-- **`getEWTTransactionDetails(...): Result`**：查询权证交易明细  
+- **`getEWTBalance(int $page = 1, int $pageSize = 10, string $openAuth = ''): Result`**：查询权证余额（不带 `X-Open-Auth` 时多为企业维度；带则为用户维度）  
+- **`getEWTTransactionDetails(int $page = 1, int $pageSize = 10, string $transactionType = '', string $bizType = '', int $year = 0, int $month = 0, string $openAuth = ''): Result`**：查询权证交易明细（`$openAuth` 语义同余额查询）  
 - **`setEnterpriseJKSURL(EnterpriseJKSURLRequest $req): Result`**：设置企业 JKS 地址  
 
 ### 配置选项
